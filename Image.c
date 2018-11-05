@@ -42,7 +42,7 @@ Image *copyImage(Image *image)
 	struct img *copy = newImage(unravel(image)->width, unravel(image)->height);
 
 	// Init
-	for(unsigned int i = 0; i < unravel(image)->width, i++)
+	for(unsigned int i = 0; i < unravel(image)->width; i++)
 	{
 		for(unsigned int j = 0; j < unravel(image)->height; j++)
 		{
