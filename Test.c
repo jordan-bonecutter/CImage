@@ -19,12 +19,12 @@ int main()
 	clock_t start = clock();
 #endif
 
-	Image *cx = newImageFromFile("Salton_Sea.ppm");
+	Image *cx = newImageFromFile("HSSOE");
 
 	doPixelwise(cx, grayscale, NARGS);
 	Image *cy = copyImage(cx);
-	float edgeX[9] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
-	float edgeY[9] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+	float edgeY[9] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
+	float edgeX[9] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
 	doKernelwise(cx, edgeX, 3);
 	doKernelwise(cy, edgeY, 3);
 
