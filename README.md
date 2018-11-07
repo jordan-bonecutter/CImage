@@ -21,12 +21,13 @@ To set a pixel in the image do:
   setPixel(new, width, height, p);
   ```
 To define a new pixel by pixel operator do:
+    ```
   SomeFilter.h:
   pixel_t someFilter(pixel_t p, const args_t args);
   
   SomeFilter.c:
   
-  ```
+
   pixel_t someFilter(pixel_t p, const args_t args)
   {
     pixel_t ret;
