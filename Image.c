@@ -275,6 +275,280 @@ Image *newImageFromFile(char *fname)
 	{
 		for(unsigned int j = 0; j < width; j++)
 		{
+			pixel.E1 = (unsigned char)fgetc(fp);
+			pixel.E2 = (unsigned char)fgetc(fp);
+			pixel.E3 = (unsigned char)fgetc(fp);
+
+			setPixel(ret, j, i, pixel);
+		}
+	}
+
+	fclose(fp);
+	return ret;
+}
+
+#define fnravel(x) ((struct fmg *)x)
+
+struct fmg
+{
+	unsigned int width;
+	unsigned int height;
+	fpixel_t *pixels;
+};
+
+Fmage *newFmage(unsigned int width, unsigned int height)
+{
+	// Alloc
+	struct fmg *ret = malloc(sizeof(struct fmg));
+	
+	// Init
+	ret->width = width;
+	ret->height = height;
+	ret->pixels = calloc(sizeof(fpixel), width*height);
+
+	// Return 
+	return ret;
+}
+
+Fmage *copyFmage(Fmage *fmage)
+{
+	// Alloc
+	struct fmg *copy = newFmage(fnravel(fmage)->width, fnravel(fmage)->height);
+
+	// Init
+	for(unsigned int i = 0; i < fnravel(fmage)->width; i++)
+	{
+		for(unsigned int j = 0; j < fnravel(fmage)->height; j++)
+		{
+			// Copy each pixel
+			copy->pixels[i + j * fnravel(fmage)->width] = fnravel(fmage)->pixels[i + j * fnravel(fmage)->width];
+		}
+	}
+
+	// Return
+	return copy;
+}
+
+void releaseFmage(Fmage *fmage)
+{
+	// Assert
+	assert(fmage);
+	assert(fnravel(fmage)->pixels);
+
+	// Free pixels
+	free(fnravel(fmage)->pixels);
+
+	// Erase memory
+	fnravel(fmage)->width = 0;
+	fnravel(fmage)->height = 0;
+
+	// Free fmage struct
+	free(fmage);
+}
+
+pixel_t getPixel(const Fmage *fmage, unsigned int x, unsigned int y)
+{
+	// Assert
+	assert(fmage);
+	assert(fnravel(fmage)->pixels);
+
+	// Return
+	return fnravel(fmage)->pixels[x + y * fnravel(fmage)->width];
+}
+
+unsigned int fmageWidth(const Fmage *fmage)
+{
+	// Assert
+	assert(fmage);
+	assert(fnravel(fmage)->pixels);
+
+	return fnravel(fmage)->width;
+}
+
+unsigned int fmageHeight(const Fmage *fmage)
+{
+	// Assert
+	assert(fmage);
+	assert(fnravel(fmage)->pixels);
+
+	return fnravel(fmage)->height;
+}
+
+void setPixel(Fmage *fmage, unsigned int x, unsigned int y, pixel_t pixel)
+{
+	// Assert
+	assert(fmage);
+	assert(fnravel(fmage)->pixels);
+
+	// Set
+	fnravel(fmage)->pixels[x + y * fnravel(fmage)->width] = pixel;
+}
+
+int saveFmage(const Fmage *fmage, char *fname)
+{
+	char *s, *t;
+	if(!strstr(fname, ".ppm"))
+	{
+		s = malloc(sizeof(char) * (strlen(fname) + 5));
+		memcpy(s, fname, strlen(fname));
+		t = s;
+		s += strlen(fname);
+		*s++ = '.';
+		*s++ = 'p';
+		*s++ = 'p';
+		*s++ = 'm';
+		*s = 0;
+		s = t;
+	}
+	else
+	{
+		s = fname;
+	}
+
+	// Decalre buff on stack
+	char buff[BSIZE];
+	memset(buff, 0, BSIZE);
+
+	// Open the file!
+	FILE *fp = fopen(s, "w");
+	
+	// If s was alloc'd
+	if(s != fname)
+	{
+		free(s);
+	}
+
+	// If the file couldn't be opened
+	if(!fp)
+	{
+#ifndef NDEBUG
+		printf("Invalid file name!\n");
+#endif
+		return -1;
+	}
+
+	// Magic string for ppm
+	fputs("P6\n", fp);
+
+	// Put fmage size
+	sprintf(buff, "%d %d\n", fnravel(fmage)->width, fnravel(fmage)->height);
+	fputs(buff, fp);
+	memset(buff, 0, BSIZE);
+
+	// Max pixel is 255
+	fputs(PIXELMAX, fp);
+
+	// Loop!
+	pixel_t curr;
+	for(unsigned int i = 0; i < fnravel(fmage)->height; i++)
+	{
+		for(unsigned int j = 0; j < fnravel(fmage)->width; j++)
+		{
+			curr = getPixel(fmage, j, i);
+			fputc((char)curr.R, fp);
+			fputc((char)curr.G, fp);
+			fputc((char)curr.B, fp);
+		}
+	}
+
+	fclose(fp);
+
+	return 0;
+}
+
+Fmage *newFmageFromFile(char *fname)
+{
+	// Set filetype
+	struct fmg *ret = NULL;
+	char *s, *t;
+	long width, height, temp;
+	pixel_t pixel;
+
+	if(!strstr(fname, ".ppm"))
+	{
+		s = malloc(sizeof(char) * (strlen(fname) + 5));
+		memcpy(s, fname, strlen(fname));
+		t = s;
+		s += strlen(fname);
+		*s++ = '.';
+		*s++ = 'p';
+		*s++ = 'p';
+		*s++ = 'm';
+		*s = 0;
+		s = t;
+	}
+	else
+	{
+		s = fname;
+	}
+
+	// Open the file!
+	FILE *fp = fopen(s, "r");
+	
+	if(s != fname)
+	{
+		free(s);
+	}
+
+	// If unseccuesful
+	if(!fp)
+	{
+#ifndef NDEBUG
+		printf("Invalid filename!\n");
+#endif
+		return NULL;
+	}
+	
+	// Make sure the magic
+	// string is P6 (color)
+	if(!(fgetc(fp) == 'P' && fgetc(fp) == '6' && fgetc(fp) == '\n'))
+	{
+#ifndef NDEBUG
+		printf("Invalid color gamut type!\n");
+#endif
+		fclose(fp);
+		return NULL;
+	}
+	
+	// Get width
+	fscanf(fp, "%ld", &width);
+	fscanf(fp, "%ld", &height);
+	if(width <= 0 || height <= 0)
+	{
+#ifndef NDEBUG
+		printf("File specifies fmage with negative dimensions (%ld x %ld)...\n", width, height);
+#endif
+		fclose(fp);
+		return NULL;
+	}
+
+	// Check if maxval is correct
+	fscanf(fp, "%ld", &temp);
+	if(temp != 255)
+	{
+#ifndef NDEBUG
+		printf("Unsupported fmage type (MAXVALUE of each pixel must be 255, file specified %ld\n)", temp);
+#endif
+		fclose(fp);
+		return NULL;
+	}
+
+	// Check for endline
+	if(fgetc(fp) != '\n')
+	{
+#ifndef NDEBUG
+		printf("Error found in file, file may be corrupted/unsupported\n");
+#endif
+		fclose(fp);
+		return NULL;
+	}
+
+	ret = newFmage(width, height);
+
+	for(unsigned int i = 0; i < height; i++)
+	{
+		for(unsigned int j = 0; j < width; j++)
+		{
 			pixel.R = (unsigned char)fgetc(fp);
 			pixel.G = (unsigned char)fgetc(fp);
 			pixel.B = (unsigned char)fgetc(fp);

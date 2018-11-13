@@ -1,0 +1,6 @@
+*.ppm
+*.o
+*.dSYM
+Test
+Test2
+TestThread
