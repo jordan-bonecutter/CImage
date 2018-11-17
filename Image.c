@@ -275,9 +275,9 @@ Image *newImageFromFile(char *fname)
 	{
 		for(unsigned int j = 0; j < width; j++)
 		{
-			pixel.E1 = (unsigned char)fgetc(fp);
-			pixel.E2 = (unsigned char)fgetc(fp);
-			pixel.E3 = (unsigned char)fgetc(fp);
+			pixel.R = (unsigned char)fgetc(fp);
+			pixel.G = (unsigned char)fgetc(fp);
+			pixel.B = (unsigned char)fgetc(fp);
 
 			setPixel(ret, j, i, pixel);
 		}
@@ -304,7 +304,7 @@ Fmage *newFmage(unsigned int width, unsigned int height)
 	// Init
 	ret->width = width;
 	ret->height = height;
-	ret->pixels = calloc(sizeof(fpixel), width*height);
+	ret->pixels = calloc(sizeof(fpixel_t), width*height);
 
 	// Return 
 	return ret;
@@ -346,7 +346,7 @@ void releaseFmage(Fmage *fmage)
 	free(fmage);
 }
 
-pixel_t getPixel(const Fmage *fmage, unsigned int x, unsigned int y)
+fpixel_t getFPixel(const Fmage *fmage, unsigned int x, unsigned int y)
 {
 	// Assert
 	assert(fmage);
@@ -374,7 +374,7 @@ unsigned int fmageHeight(const Fmage *fmage)
 	return fnravel(fmage)->height;
 }
 
-void setPixel(Fmage *fmage, unsigned int x, unsigned int y, pixel_t pixel)
+void setFPixel(Fmage *fmage, unsigned int x, unsigned int y, fpixel_t pixel)
 {
 	// Assert
 	assert(fmage);
